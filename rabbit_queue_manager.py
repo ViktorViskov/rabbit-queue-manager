@@ -66,14 +66,14 @@ class RabbitQueueManager:
             self._close()
             return None
 
-    def add_to_quene(self, item: str) -> None:
+    def add_to_queue(self, item: str) -> None:
         try:
             self._channel.basic_publish(exchange='', routing_key=self._queue_name, body=item)
 
         except StreamLostError:
             print("Rabbit MQ. Connection lost. Reconnecting.")
             self._open_connection()
-            self.add_to_quene(item)
+            self.add_to_queue(item)
 
         except Exception:
             print("Rabbit MQ. Uknown error")
@@ -86,9 +86,9 @@ class RabbitQueueManager:
         _method_frame = self._channel.queue_declare(queue=self._queue_name, passive=True)
         return _method_frame.method.message_count
 
-    def add_list_to_quene(self, items: list[str]) -> None:
+    def add_list_to_queue(self, items: list[str]) -> None:
         for item in items:
-            self.add_to_quene(item)
+            self.add_to_queue(item)
         
     def get_next(self) -> str | None:
         return self._receive_message()
