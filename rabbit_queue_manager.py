@@ -1,3 +1,5 @@
+import logging
+
 import pika
 from pika import BasicProperties
 from pika.spec import Basic
@@ -5,6 +7,9 @@ from pika.exceptions import ProbableAuthenticationError
 from pika.exceptions import StreamLostError
 from pika.exceptions import ChannelClosedByBroker
 
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 RABBITMQ_USER="username"
 RABBITMQ_PASSWORD="password"
@@ -20,35 +25,43 @@ class RabbitQueueManager:
     def _open_connection(self) -> None:
         try:
             credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASSWORD)
-            self._connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_ADDRESS, credentials=credentials))
+            self._connection = pika.BlockingConnection(pika.ConnectionParameters(RABBITMQ_ADDRESS, credentials=credentials, connection_attempts=5, retry_delay=5))
             
             self._channel = self._connection.channel()
             self._channel.queue_declare(queue=self._queue_name)
+            logger.info(f"Connected to RabbitMQ: {RABBITMQ_ADDRESS}. Queue: {self._queue_name}")
             
         except ProbableAuthenticationError:
             print("Rabbit MQ. Login or password is wrong")
-        except Exception:
-            print("Rabbit MQ. Uknown error")
+        except Exception as e:
+            logger.exception("Failed to connect to RabbitMQ")
+            raise e
             
     def _close(self) -> None:
         if self._connection and self._connection.is_open:
             self._connection.close()
+            logger.info("RabbitMQ connection closed")
 
     def _receive_message(self) -> str | None:
         if not (self._connection and self._connection.is_open):
-            print("RabbitMQ: Connection is closed. Reconnecting.")
+            logger.warning("RabbitMQ connection is closed. Reconnecting...")
             self._open_connection()
         
         try:
             method_frame, _, body = self._channel.basic_get(self._queue_name) # type: ignore
         except ChannelClosedByBroker:
-            print(f"RabbitMQ: Queue '{self._queue_name}' not found.")
+            logger.error(f"Queue '{self._queue_name}' not found. Closing connection.")
             self._close()
         
         except StreamLostError:
-            print("RabbitMQ: Connection lost. Reconnecting.")
+            logger.warning("Connection lost. Reconnecting...")
             self._open_connection()
             return self._receive_message()
+        
+        except Exception as e:
+            logger.exception("Error receiving message from RabbitMQ")
+            self._close()
+            raise e
         
         # If there is no message in the queue
         if method_frame is None:
@@ -69,22 +82,28 @@ class RabbitQueueManager:
     def add_to_queue(self, item: str) -> None:
         try:
             self._channel.basic_publish(exchange='', routing_key=self._queue_name, body=item)
+            logger.debug(f"Message added to queue '{self._queue_name}': {item[:30]}...")
 
         except StreamLostError:
-            print("Rabbit MQ. Connection lost. Reconnecting.")
+            logger.warning("Connection lost. Reconnecting...")
             self._open_connection()
             self.add_to_queue(item)
 
-        except Exception:
-            print("Rabbit MQ. Uknown error")
+        except Exception as e:
+            logger.exception("Error adding message to RabbitMQ")
+            raise e
     
     def get_size(self) -> int:
         if not (self._connection and self._connection.is_open):
-            print("RabbitMQ: Connection is closed. Reconnecting.")
+            logger.warning("RabbitMQ connection is closed. Reconnecting...")
             self._open_connection()
-            
-        _method_frame = self._channel.queue_declare(queue=self._queue_name, passive=True)
-        return _method_frame.method.message_count
+
+        try:
+            method_frame = self._channel.queue_declare(queue=self._queue_name, passive=True)
+            return method_frame.method.message_count
+        except Exception as e:
+            logger.exception("Error retrieving queue size")
+            raise e
 
     def add_list_to_queue(self, items: list[str]) -> None:
         for item in items:
