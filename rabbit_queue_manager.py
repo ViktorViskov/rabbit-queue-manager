@@ -8,7 +8,7 @@ from pika.exceptions import StreamLostError
 from pika.exceptions import ChannelClosedByBroker
 
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.WARNING, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 RABBITMQ_USER="username"

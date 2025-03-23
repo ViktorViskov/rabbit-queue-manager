@@ -1,0 +1,9 @@
+[project]
+name = "rabbit-queue-manager"
+version = "0.1.0"
+description = "Simple rabbitmq broker manager"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pika>=1.3.2",
+]
