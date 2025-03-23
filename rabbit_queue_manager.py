@@ -29,7 +29,6 @@ class RabbitQueueManager:
             
             self._channel = self._connection.channel()
             self._channel.queue_declare(queue=self._queue_name)
-            logger.info(f"Connected to RabbitMQ: {RABBITMQ_ADDRESS}. Queue: {self._queue_name}")
             
         except ProbableAuthenticationError:
             print("Rabbit MQ. Login or password is wrong")
@@ -47,6 +46,9 @@ class RabbitQueueManager:
             logger.warning("RabbitMQ connection is closed. Reconnecting...")
             self._open_connection()
         
+        method_frame = None
+        body = None
+        
         try:
             method_frame, _, body = self._channel.basic_get(self._queue_name) # type: ignore
         except ChannelClosedByBroker:
@@ -59,12 +61,15 @@ class RabbitQueueManager:
             return self._receive_message()
         
         except Exception as e:
-            logger.exception("Error receiving message from RabbitMQ")
+            logger.exception("Error under receiving message from RabbitMQ")
             self._close()
             raise e
         
         # If there is no message in the queue
         if method_frame is None:
+            return None
+        
+        if body is None:
             return None
         
         try:
@@ -82,7 +87,6 @@ class RabbitQueueManager:
     def add_to_queue(self, item: str) -> None:
         try:
             self._channel.basic_publish(exchange='', routing_key=self._queue_name, body=item)
-            logger.debug(f"Message added to queue '{self._queue_name}': {item[:30]}...")
 
         except StreamLostError:
             logger.warning("Connection lost. Reconnecting...")
