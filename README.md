@@ -54,32 +54,32 @@ from rabbit_manager import RabbitManager
 
 # Create a manager for a RabbitMQ queue
 manager = RabbitManager(
-  "my_queue",           # queue_name (positional argument, required)
-  username="guest",     # keyword-only (required)
-  password="guest",     # keyword-only (required)
-  host="localhost",     # optional, defaults to "localhost"
-  port=5672,            # optional, defaults to 5672
-  queue_durable=True,   # optional, defaults to True
-  message_ttl_minutes=10,  # optional, defaults to 0
-  confirm_delivery=True,   # optional, defaults to True
+    "my_queue",              # queue_name (positional argument, required)
+    username="guest",        # keyword-only (required)
+    password="guest",        # keyword-only (required)
+    host="localhost",        # optional, defaults to "localhost"
+    port=5672,               # optional, defaults to 5672
+    queue_durable=True,      # optional, defaults to True
+    message_ttl_minutes=10,  # optional, defaults to 0
+    confirm_delivery=True,   # optional, defaults to True
 )
 
 # Use as a context manager to auto-open/close connection
 with manager as q:
-  # Add a message
-  delivered = q.add("hello world")
-  print("Delivered:", delivered)
+    # Add a message
+    delivered = q.add("hello world")
+    print("Delivered:", delivered)
 
-  # Check queue size
-  print("Queue size:", q.size())
+    # Check queue size
+    print("Queue size:", q.size())
 
-  # Get one message (non-blocking)
-  msg = q.get()
-  print("Got:", msg)
+    # Get one message (non-blocking)
+    msg = q.get()
+    print("Got:", msg)
 
-  # Block and wait for a message (with optional timeout)
-  msg2 = q.consume(timeout=5)
-  print("Consumed:", msg2)
+    # Block and wait for a message (with optional timeout)
+    msg2 = q.consume(timeout=5)
+    print("Consumed:", msg2)
 
 # Manual open/close usage
 manager.open()
@@ -87,9 +87,10 @@ manager.add("another message")
 print("Size:", manager.size())
 print("Get:", manager.get())
 manager.close()
+```
 
 
-Notes:
+# Notes:
 - The example assumes a local RabbitMQ instance on `localhost:5672` with `guest/guest` credentials.
 - When `confirm_delivery=True`, publishing raises on delivery issues (e.g., unroutable or NACK).
 - `message_ttl_minutes>0` sets per-queue message TTL.
