@@ -17,11 +17,12 @@ logger = logging.getLogger(__name__)
 class RabbitManager:
     def __init__(
         self,
-        host: str,
-        port: int,
+        queue_name: str,
+        *,
         username: str,
         password: str,
-        queue_name: str,
+        host: str = "localhost",
+        port: int = 5672,
         queue_durable: bool = True,
         message_ttl_minutes: int = 0,
         confirm_delivery: bool = True,

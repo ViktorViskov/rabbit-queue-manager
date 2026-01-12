@@ -1,11 +1,11 @@
-# RabbitMQ Queue Manager
+# Python RabbitMQ Manager
 <p>
   <img src=".imgs/pylogo.svg" height="40" />
   <img src=".imgs/plus.svg" height="40" />
   <img src=".imgs/rlogo.png" height="40" />
 </p>
 
-**RabbitMQ Queue Manager** is a simple, Python-based utility for managing RabbitMQ message queues. It provides an easy-to-use interface for sending, receiving, and processing messages from RabbitMQ queues, with built-in support for automatic reconnections and error handling.
+**Python RabbitMQ Manager** is a simple, Python-based utility for managing RabbitMQ message queues. It provides an easy-to-use interface for sending, receiving, and processing messages from RabbitMQ queues, with built-in support for automatic reconnections and error handling.
 
 **Key Features:**
  - Send messages to RabbitMQ queues.
@@ -54,14 +54,14 @@ from rabbit_manager import RabbitManager
 
 # Create a manager for a RabbitMQ queue
 manager = RabbitManager(
-  host="localhost",
-  port=5672,
-  username="guest",
-  password="guest",
-  queue_name="my_queue",
-  queue_durable=True,
-  message_ttl_minutes=10,  # optional
-  confirm_delivery=True,   # enable publisher confirms
+  "my_queue",           # queue_name (positional argument, required)
+  username="guest",     # keyword-only (required)
+  password="guest",     # keyword-only (required)
+  host="localhost",     # optional, defaults to "localhost"
+  port=5672,            # optional, defaults to 5672
+  queue_durable=True,   # optional, defaults to True
+  message_ttl_minutes=10,  # optional, defaults to 0
+  confirm_delivery=True,   # optional, defaults to True
 )
 
 # Use as a context manager to auto-open/close connection
