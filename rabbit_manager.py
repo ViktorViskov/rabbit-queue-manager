@@ -46,8 +46,11 @@ class RabbitManager:
                     self._host,
                     self._port,
                     credentials=credentials,
-                    connection_attempts=3,
+                    connection_attempts=5,
                     retry_delay=5,
+                    socket_timeout=10,
+                    heartbeat=30,
+                    blocked_connection_timeout=60,
                 )
             )
 
