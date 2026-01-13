@@ -1,11 +1,11 @@
-# Python RabbitMQ Manager
+# Rabbit Manager
 <p>
   <img src=".imgs/pylogo.svg" height="40" />
   <img src=".imgs/plus.svg" height="40" />
   <img src=".imgs/rlogo.png" height="40" />
 </p>
 
-**Python RabbitMQ Manager** is a simple, Python-based utility for managing RabbitMQ message queues. It provides an easy-to-use interface for sending, receiving, and processing messages from RabbitMQ queues, with built-in support for automatic reconnections and error handling.
+**Rabbit Manager** is a simple, Python-based utility for managing RabbitMQ message queues. It provides an easy-to-use interface for sending, receiving, and processing messages from RabbitMQ queues, with built-in support for automatic reconnections and error handling.
 
 **Key Features:**
  - Send messages to RabbitMQ queues.
@@ -21,30 +21,24 @@ This tool is ideal for developers looking to integrate RabbitMQ into their Pytho
 - Python >= 3.10
 - Pika (installed via project dependencies)
 
-Install dependencies with `uv` (recommended):
+Install from PyPI (package name: `rabbit-manager`):
+
+```bash
+uv add rabbit-manager
+# or
+pip install rabbit-manager
+```
+
+Install for local development with `uv` (recommended):
 
 ```bash
 uv sync --dev
 ```
 
-Alternatively, using pip:
+Alternatively, using pip for editable dev install:
 
 ```bash
 pip install -e ".[dev]"
-```
-
-Install Pika directly (if you only need the library):
-
-Using uv:
-
-```bash
-uv add pika
-```
-
-Using pip:
-
-```bash
-pip install pika
 ```
 
 # Quick Start (RabbitManager)
