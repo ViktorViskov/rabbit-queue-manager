@@ -25,7 +25,9 @@ Install from PyPI (package name: `rabbit-manager`):
 
 ```bash
 uv add rabbit-manager
-# or
+```
+or
+```bash
 pip install rabbit-manager
 ```
 
