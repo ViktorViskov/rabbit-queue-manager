@@ -1,8 +1,8 @@
 # Rabbit Manager
 <p>
-  <img src=".imgs/pylogo.svg" height="40" />
-  <img src=".imgs/plus.svg" height="40" />
-  <img src=".imgs/rlogo.png" height="40" />
+  <img src="https://github.com/ViktorViskov/rabbit-manager/raw/main/.imgs/pylogo.svg" height="40" />
+  <img src="https://github.com/ViktorViskov/rabbit-manager/raw/main/.imgs/plus.svg" height="40" />
+  <img src="https://github.com/ViktorViskov/rabbit-manager/raw/main/.imgs/rlogo.png" height="40" />
 </p>
 
 **Rabbit Manager** is a simple, Python-based utility for managing RabbitMQ message queues. It provides an easy-to-use interface for sending, receiving, and processing messages from RabbitMQ queues, with built-in support for automatic reconnections and error handling.
