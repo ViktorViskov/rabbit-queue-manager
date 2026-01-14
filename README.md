@@ -58,6 +58,7 @@ manager = RabbitManager(
     queue_durable=True,      # optional, defaults to True
     message_ttl_minutes=10,  # optional, defaults to 0
     confirm_delivery=True,   # optional, defaults to True
+    max_priority=10,         # optional, defaults to 0
 )
 
 # Use as a context manager to auto-open/close connection
@@ -65,6 +66,10 @@ with manager as q:
     # Add a message
     delivered = q.add("hello world")
     print("Delivered:", delivered)
+
+    # Add a message with priority (requires max_priority > 0)
+    delivered_priority = q.add("priority message", priority=5)
+    print("Delivered with priority:", delivered_priority)
 
     # Check queue size
     print("Queue size:", q.size())
@@ -90,6 +95,7 @@ manager.close()
 - The example assumes a local RabbitMQ instance on `localhost:5672` with `guest/guest` credentials.
 - When `confirm_delivery=True`, publishing raises on delivery issues (e.g., unroutable or NACK).
 - `message_ttl_minutes>0` sets per-queue message TTL.
+- Message priority works only when `max_priority>0`, and can be set per message via `add(..., priority=...)`.
 
 # Testing
 

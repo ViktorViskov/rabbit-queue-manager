@@ -2,7 +2,8 @@
 RabbitMQ Manager - Comprehensive Usage Examples
 
 This module demonstrates the main features and usage patterns of the RabbitManager library.
-It covers basic queue operations, context manager usage, batch processing, and error handling.
+It covers basic queue operations, context manager usage, priority, batch processing,
+and error handling.
 
 Prerequisites:
     - RabbitMQ server running on localhost:5672 (or adjust host/port)
@@ -47,6 +48,7 @@ def example_basic_context_manager():
         queue_durable=True,  # Queue persists after server restart
         message_ttl_minutes=0,  # No message expiration (0 = infinite)
         confirm_delivery=True,  # Enable publisher confirms (raises exceptions on failure)
+        max_priority=10,  # Enable per-message priority (0 disables priority)
     )
 
     # Use context manager for automatic connection management
@@ -54,6 +56,10 @@ def example_basic_context_manager():
         # Add (publish) a message to the queue
         success = q.add("Hello, RabbitMQ!")
         print(f"Message sent successfully: {success}")
+
+        # Add a message with priority (requires max_priority > 0)
+        priority_success = q.add("Priority hello!", priority=5)
+        print(f"Priority message sent successfully: {priority_success}")
 
         # Check the current queue size
         queue_size = q.size()
@@ -457,6 +463,41 @@ def example_connection_resilience():
 
 
 # ============================================================================
+# Example 11: Message Priority
+# ============================================================================
+def example_message_priority():
+    """
+    Demonstrates message priority support.
+
+    Priority is enabled by setting max_priority > 0 on the queue. Per-message
+    priority is set via add(..., priority=N).
+    """
+    print("\n" + "="*70)
+    print("EXAMPLE 11: Message Priority")
+    print("="*70)
+
+    manager = RabbitManager(
+        "priority_queue",  # queue_name (positional argument)
+        username="guest",
+        password="guest",
+        max_priority=10,  # Enable priority levels 0-10
+    )
+
+    with manager as q:
+        q.add("low priority", priority=1)
+        q.add("medium priority", priority=5)
+        q.add("high priority", priority=9)
+        print("Published 3 messages with different priorities")
+
+        # Note: actual delivery order depends on RabbitMQ and queue state
+        while True:
+            message = q.get()
+            if message is None:
+                break
+            print(f"Received: {message}")
+
+
+# ============================================================================
 # Main Function - Run All Examples
 # ============================================================================
 def main():
@@ -484,6 +525,7 @@ def main():
         ("Error Handling", example_error_handling),
         ("Producer-Consumer", example_producer_consumer),
         ("Connection Resilience", example_connection_resilience),
+        ("Message Priority", example_message_priority),
     ]
 
     print("\nAvailable examples:")

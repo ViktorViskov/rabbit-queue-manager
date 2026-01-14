@@ -26,6 +26,7 @@ class RabbitManager:
         queue_durable: bool = True,
         message_ttl_minutes: int = 0,
         confirm_delivery: bool = True,
+        max_priority: int = 0,
     ) -> None:
         self._queue_name = queue_name
         self._host = host
@@ -37,6 +38,7 @@ class RabbitManager:
         self._channel = None
         self._message_ttl_minutes = message_ttl_minutes
         self._confirm_delivery = confirm_delivery
+        self._max_priority = max_priority
 
     def open(self) -> None:
         try:
@@ -57,6 +59,8 @@ class RabbitManager:
             arguments = {}
             if self._message_ttl_minutes > 0:
                 arguments["x-message-ttl"] = self._message_ttl_minutes * 60 * 1000
+            if self._max_priority > 0:
+                arguments["x-max-priority"] = self._max_priority
 
             self._channel = self._connection.channel()
 
@@ -96,8 +100,12 @@ class RabbitManager:
         self.close()
         return False
 
-    def add(self, item: str) -> bool:
+    def add(self, item: str, priority: int | None = None) -> bool:
         """Add a message to the queue.
+
+        Args:
+            item: Message content to add to the queue.
+            priority: Higher values = higher priority. Works only if max_priority > 0.
 
         Returns:
             bool: True if message was successfully delivered, False otherwise.
@@ -110,12 +118,18 @@ class RabbitManager:
             raise Exception("RabbitMQ channel is not established.")
 
         try:
+            # Prepare message properties
+            properties = None
+            if priority is not None and self._max_priority > 0:
+                properties = pika.BasicProperties(priority=priority)
+
             # With confirm_delivery enabled, this will raise an exception
             # if the message cannot be delivered
             self._channel.basic_publish(
                 exchange="",
                 routing_key=self._queue_name,
                 body=item,
+                properties=properties,
                 mandatory=True,  # Return message if it can't be routed
             )
             logger.debug(

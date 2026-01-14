@@ -63,6 +63,7 @@ Tests for the `add()` method:
 - Successful message addition
 - Automatic reconnection
 - Handling various errors (UnroutableError, NackError, StreamLostError)
+- Priority message publishing when `max_priority > 0`
 
 ### TestRabbitManagerSize
 Tests for the `size()` method:

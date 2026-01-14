@@ -30,6 +30,7 @@ class TestRabbitManagerInit:
         assert manager._queue_durable is True
         assert manager._message_ttl_minutes == 0
         assert manager._confirm_delivery is True
+        assert manager._max_priority == 0
         assert manager._connection is None
         assert manager._channel is None
 
@@ -54,6 +55,19 @@ class TestRabbitManagerInit:
         assert manager._queue_durable is False
         assert manager._message_ttl_minutes == 30
         assert manager._confirm_delivery is False
+
+    def test_init_with_max_priority(self):
+        """Test initialization with max_priority."""
+        manager = RabbitManager(
+            host="localhost",
+            port=5672,
+            username="guest",
+            password="guest",
+            queue_name="priority_queue",
+            max_priority=10,
+        )
+
+        assert manager._max_priority == 10
 
 
 class TestRabbitManagerOpen:
@@ -107,6 +121,57 @@ class TestRabbitManagerOpen:
             queue="test_queue",
             durable=True,
             arguments={"x-message-ttl": 600000},  # 10 minutes in ms
+        )
+
+    @patch("rabbit_manager.pika.BlockingConnection")
+    def test_open_with_max_priority(self, mock_connection_class):
+        """Test connection opening with max_priority."""
+        mock_connection = Mock()
+        mock_channel = Mock()
+        mock_connection.channel.return_value = mock_channel
+        mock_connection_class.return_value = mock_connection
+
+        manager = RabbitManager(
+            host="localhost",
+            port=5672,
+            username="guest",
+            password="guest",
+            queue_name="test_queue",
+            max_priority=10,
+        )
+
+        manager.open()
+
+        mock_channel.queue_declare.assert_called_once_with(
+            queue="test_queue",
+            durable=True,
+            arguments={"x-max-priority": 10},
+        )
+
+    @patch("rabbit_manager.pika.BlockingConnection")
+    def test_open_with_ttl_and_priority(self, mock_connection_class):
+        """Test connection opening with both TTL and max_priority."""
+        mock_connection = Mock()
+        mock_channel = Mock()
+        mock_connection.channel.return_value = mock_channel
+        mock_connection_class.return_value = mock_connection
+
+        manager = RabbitManager(
+            host="localhost",
+            port=5672,
+            username="guest",
+            password="guest",
+            queue_name="test_queue",
+            message_ttl_minutes=5,
+            max_priority=10,
+        )
+
+        manager.open()
+
+        mock_channel.queue_declare.assert_called_once_with(
+            queue="test_queue",
+            durable=True,
+            arguments={"x-message-ttl": 300000, "x-max-priority": 10},
         )
 
     @patch("rabbit_manager.pika.BlockingConnection")
@@ -255,6 +320,7 @@ class TestRabbitManagerAdd:
             exchange="",
             routing_key="test_queue",
             body="test message",
+            properties=None,
             mandatory=True,
         )
 
@@ -330,6 +396,60 @@ class TestRabbitManagerAdd:
 
         with pytest.raises(StreamLostError):
             self.manager.add("test message")
+
+    @patch("rabbit_manager.pika.BasicProperties")
+    def test_add_with_priority(self, mock_basic_properties):
+        """Test adding message with priority."""
+        mock_connection = Mock()
+        mock_connection.is_closed = False
+        mock_channel = Mock()
+        mock_properties = Mock()
+        mock_basic_properties.return_value = mock_properties
+
+        self.manager._max_priority = 10
+        self.manager._connection = mock_connection
+        self.manager._channel = mock_channel
+
+        result = self.manager.add("priority message", priority=5)
+
+        assert result is True
+        # Verify BasicProperties was called with priority
+        mock_basic_properties.assert_called_once_with(priority=5)
+        # Verify basic_publish was called with the properties
+        mock_channel.basic_publish.assert_called_once_with(
+            exchange="",
+            routing_key="test_queue",
+            body="priority message",
+            properties=mock_properties,
+            mandatory=True,
+        )
+
+    @patch("rabbit_manager.pika.BasicProperties")
+    def test_add_with_zero_priority(self, mock_basic_properties):
+        """Test adding message with zero priority."""
+        mock_connection = Mock()
+        mock_connection.is_closed = False
+        mock_channel = Mock()
+        mock_properties = Mock()
+        mock_basic_properties.return_value = mock_properties
+
+        self.manager._max_priority = 10
+        self.manager._connection = mock_connection
+        self.manager._channel = mock_channel
+
+        result = self.manager.add("message", priority=0)
+
+        assert result is True
+        # Verify BasicProperties was called with priority 0
+        mock_basic_properties.assert_called_once_with(priority=0)
+        # Verify basic_publish was called with the properties
+        mock_channel.basic_publish.assert_called_once_with(
+            exchange="",
+            routing_key="test_queue",
+            body="message",
+            properties=mock_properties,
+            mandatory=True,
+        )
 
 
 class TestRabbitManagerSize:
